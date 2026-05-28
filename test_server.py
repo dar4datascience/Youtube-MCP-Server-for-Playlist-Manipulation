@@ -348,8 +348,12 @@ class TestCallToolErrors(unittest.IsolatedAsyncioTestCase):
         self.assertIn('Failed to initialize YouTube client', result[0].text)
 
 
-class TestServerStructure(unittest.TestCase):
+class TestServerStructure(unittest.IsolatedAsyncioTestCase):
     """Test server module structure and constants."""
+
+    def setUp(self):
+        """Reset youtube_client before testing initial state."""
+        server_module.youtube_client = None
 
     def test_server_name(self):
         """Test that server has correct name."""

@@ -64,6 +64,22 @@ Restart Windsurf and the MCP tools should appear in your tool list. Test with:
 
 > "Show me all my YouTube playlists"
 
+## Project Files
+
+| File | Purpose |
+|------|---------|
+| `server.py` | MCP server entry point (stdio transport) |
+| `youtube_client.py` | YouTube Data API wrapper with OAuth2 |
+| `auth_setup.py` | One-time OAuth2 browser flow |
+| `requirements.txt` | Python dependencies |
+| `.env.example` | Environment variable template |
+| `windsurf_mcp.json` | Windsurf MCP configuration |
+| `run_tests.py` | Test runner with coverage options |
+| `conftest.py` | Pytest shared fixtures |
+| `test_youtube_client.py` | Unit tests for API client |
+| `test_server.py` | Unit tests for MCP server tools |
+| `test_integration.py` | Integration/workflow tests |
+
 ## Available MCP Tools
 
 | Tool | Purpose |
@@ -99,6 +115,45 @@ Restart Windsurf and the MCP tools should appear in your tool list. Test with:
 - **Never commit** your `.env` file or `.refresh_token` file
 - The refresh token grants full YouTube access — keep it secure
 - API calls are subject to YouTube's quota limits (10,000 units/day)
+
+## Testing
+
+The project includes comprehensive unit and integration tests.
+
+### Run All Tests
+
+```bash
+# Run all tests
+python run_tests.py
+
+# Or with pytest directly
+python -m pytest
+
+# Run with coverage report
+python run_tests.py --coverage
+
+# Run specific test files
+python -m pytest test_youtube_client.py -v
+python -m pytest test_server.py -v
+python -m pytest test_integration.py -v
+```
+
+### Test Structure
+
+| File | Purpose |
+|------|---------|
+| `test_youtube_client.py` | Unit tests for YouTube API client |
+| `test_server.py` | Unit tests for MCP server tool handlers |
+| `test_integration.py` | Integration tests for workflows |
+
+### Test Coverage
+
+The test suite covers:
+- **Authentication**: OAuth2 token handling and error cases
+- **All 10 MCP tools**: Input validation and response formatting
+- **Error handling**: API errors, network failures, missing credentials
+- **Edge cases**: Empty playlists, pagination, partial batch failures
+- **Integration workflows**: Full reorganization scenarios
 
 ## Troubleshooting
 
