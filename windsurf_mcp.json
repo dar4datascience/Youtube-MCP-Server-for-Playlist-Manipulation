@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "youtube-playlists": {
+      "command": "python",
+      "args": [
+        "/home/rotundchonk/Documents/Github Repos/Youtube-MCP-Server-for-Playlist-Manipulation/server.py"
+      ],
+      "env": {
+        "PYTHONUNBUFFERED": "1"
+      }
+    }
+  }
+}
