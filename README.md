@@ -95,6 +95,27 @@ Restart Windsurf and the MCP tools should appear in your tool list. Test with:
 | `batch_reorganize` | Move multiple videos at once |
 | `infer_playlist_categories` | Analyze playlist content for categorization suggestions |
 
+## What You Can Do With Playlists
+
+### Browsing & Inspection
+- List all your playlists with title, video count, and privacy status
+- Fetch every video in a playlist with its title, position, channel, and direct URL
+- Search for videos inside a playlist by keyword (matches title or description)
+- Analyze a playlist's content to discover recurring themes and get suggested sub-categories
+
+### Rearranging & Moving Videos
+- Add any YouTube video (by ID) to a playlist, optionally at a specific position
+- Remove a video from a playlist
+- Move a video atomically from one playlist to another (adds to target, removes from source in one operation)
+- Batch-move many videos at once across playlists in a single call — useful for bulk reorganizations
+
+### Playlist Management
+- Create new playlists (title, description, privacy: private / unlisted / public)
+- Delete playlists permanently
+
+### Safety Guardrails
+All mutating operations (`create_playlist`, `delete_playlist`, `add_video_to_playlist`, `remove_video_from_playlist`, `move_video_between_playlists`, `batch_reorganize`) require `confirmed=true` to execute. Without it, the tool returns a **dry-run summary** describing exactly what would happen — no changes are made until you explicitly confirm.
+
 ## Example Workflows
 
 ### Reorganize a Messy Playlist

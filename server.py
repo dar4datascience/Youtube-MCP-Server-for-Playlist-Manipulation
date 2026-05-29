@@ -61,7 +61,7 @@ async def list_tools() -> list[Tool]:
         ),
         Tool(
             name="create_playlist",
-            description="Create a new YouTube playlist with the specified title and optional description",
+            description="Create a new YouTube playlist with the specified title and optional description. Requires confirmed=true or will return a dry-run summary instead of executing.",
             inputSchema={
                 "type": "object",
                 "properties": {
@@ -79,6 +79,11 @@ async def list_tools() -> list[Tool]:
                         "enum": ["private", "unlisted", "public"],
                         "description": "Privacy setting for the playlist",
                         "default": "private"
+                    },
+                    "confirmed": {
+                        "type": "boolean",
+                        "description": "Must be true to execute. If false or omitted, returns a dry-run summary without making any changes.",
+                        "default": False
                     }
                 },
                 "required": ["title"]
@@ -86,13 +91,18 @@ async def list_tools() -> list[Tool]:
         ),
         Tool(
             name="delete_playlist",
-            description="Delete a YouTube playlist permanently. This cannot be undone!",
+            description="Delete a YouTube playlist permanently. This cannot be undone! Requires confirmed=true or will return a dry-run summary instead of executing.",
             inputSchema={
                 "type": "object",
                 "properties": {
                     "playlist_id": {
                         "type": "string",
                         "description": "YouTube playlist ID to delete"
+                    },
+                    "confirmed": {
+                        "type": "boolean",
+                        "description": "Must be true to execute. If false or omitted, returns a dry-run summary without making any changes.",
+                        "default": False
                     }
                 },
                 "required": ["playlist_id"]
@@ -100,7 +110,7 @@ async def list_tools() -> list[Tool]:
         ),
         Tool(
             name="add_video_to_playlist",
-            description="Add a video to a playlist by its video ID",
+            description="Add a video to a playlist by its video ID. Requires confirmed=true or will return a dry-run summary instead of executing.",
             inputSchema={
                 "type": "object",
                 "properties": {
@@ -115,6 +125,11 @@ async def list_tools() -> list[Tool]:
                     "position": {
                         "type": "integer",
                         "description": "Optional position to insert the video (0-indexed). If not specified, adds to end.",
+                    },
+                    "confirmed": {
+                        "type": "boolean",
+                        "description": "Must be true to execute. If false or omitted, returns a dry-run summary without making any changes.",
+                        "default": False
                     }
                 },
                 "required": ["playlist_id", "video_id"]
@@ -122,13 +137,18 @@ async def list_tools() -> list[Tool]:
         ),
         Tool(
             name="remove_video_from_playlist",
-            description="Remove a video from a playlist using its playlist item ID (not video ID). Use get_playlist_videos to find the playlist_item_id.",
+            description="Remove a video from a playlist using its playlist item ID (not video ID). Use get_playlist_videos to find the playlist_item_id. Requires confirmed=true or will return a dry-run summary instead of executing.",
             inputSchema={
                 "type": "object",
                 "properties": {
                     "playlist_item_id": {
                         "type": "string",
                         "description": "The playlist item ID (unique identifier for this video in this specific playlist)"
+                    },
+                    "confirmed": {
+                        "type": "boolean",
+                        "description": "Must be true to execute. If false or omitted, returns a dry-run summary without making any changes.",
+                        "default": False
                     }
                 },
                 "required": ["playlist_item_id"]
@@ -136,7 +156,7 @@ async def list_tools() -> list[Tool]:
         ),
         Tool(
             name="move_video_between_playlists",
-            description="Move a video from one playlist to another atomically (removes from source, adds to target)",
+            description="Move a video from one playlist to another atomically (removes from source, adds to target). Requires confirmed=true or will return a dry-run summary instead of executing.",
             inputSchema={
                 "type": "object",
                 "properties": {
@@ -155,6 +175,11 @@ async def list_tools() -> list[Tool]:
                     "playlist_item_id": {
                         "type": "string",
                         "description": "The playlist item ID from the source playlist (required for removal)"
+                    },
+                    "confirmed": {
+                        "type": "boolean",
+                        "description": "Must be true to execute. If false or omitted, returns a dry-run summary without making any changes.",
+                        "default": False
                     }
                 },
                 "required": ["source_playlist_id", "target_playlist_id", "video_id", "playlist_item_id"]
@@ -180,7 +205,7 @@ async def list_tools() -> list[Tool]:
         ),
         Tool(
             name="batch_reorganize",
-            description="Perform multiple video move operations in a single call. Useful for bulk reorganizations.",
+            description="Perform multiple video move operations in a single call. Useful for bulk reorganizations. Requires confirmed=true or will return a dry-run summary instead of executing.",
             inputSchema={
                 "type": "object",
                 "properties": {
@@ -197,6 +222,11 @@ async def list_tools() -> list[Tool]:
                             },
                             "required": ["source_playlist_id", "target_playlist_id", "video_id", "playlist_item_id"]
                         }
+                    },
+                    "confirmed": {
+                        "type": "boolean",
+                        "description": "Must be true to execute. If false or omitted, returns a dry-run summary without making any changes.",
+                        "default": False
                     }
                 },
                 "required": ["operations"]
@@ -266,6 +296,21 @@ async def call_tool(name: str, arguments: dict[str, Any]) -> list[TextContent]:
             )]
 
         elif name == "create_playlist":
+            if not arguments.get("confirmed", False):
+                return [TextContent(
+                    type="text",
+                    text=json.dumps({
+                        "confirmed": False,
+                        "action": "create_playlist",
+                        "dry_run": True,
+                        "would_create": {
+                            "title": arguments["title"],
+                            "description": arguments.get("description", ""),
+                            "privacy_status": arguments.get("privacy_status", "private")
+                        },
+                        "message": "Dry run only. Re-call with confirmed=true to create this playlist."
+                    }, indent=2)
+                )]
             result = youtube_client.create_playlist(
                 title=arguments["title"],
                 description=arguments.get("description", ""),
@@ -280,6 +325,19 @@ async def call_tool(name: str, arguments: dict[str, Any]) -> list[TextContent]:
             )]
 
         elif name == "delete_playlist":
+            if not arguments.get("confirmed", False):
+                return [TextContent(
+                    type="text",
+                    text=json.dumps({
+                        "confirmed": False,
+                        "action": "delete_playlist",
+                        "dry_run": True,
+                        "would_delete": {
+                            "playlist_id": arguments["playlist_id"]
+                        },
+                        "message": "Dry run only. Re-call with confirmed=true to permanently delete this playlist. This cannot be undone!"
+                    }, indent=2)
+                )]
             success = youtube_client.delete_playlist(arguments["playlist_id"])
             return [TextContent(
                 type="text",
@@ -290,6 +348,21 @@ async def call_tool(name: str, arguments: dict[str, Any]) -> list[TextContent]:
             )]
 
         elif name == "add_video_to_playlist":
+            if not arguments.get("confirmed", False):
+                return [TextContent(
+                    type="text",
+                    text=json.dumps({
+                        "confirmed": False,
+                        "action": "add_video_to_playlist",
+                        "dry_run": True,
+                        "would_add": {
+                            "playlist_id": arguments["playlist_id"],
+                            "video_id": arguments["video_id"],
+                            "position": arguments.get("position", "end")
+                        },
+                        "message": "Dry run only. Re-call with confirmed=true to add the video."
+                    }, indent=2)
+                )]
             result = youtube_client.add_video_to_playlist(
                 playlist_id=arguments["playlist_id"],
                 video_id=arguments["video_id"],
@@ -304,6 +377,19 @@ async def call_tool(name: str, arguments: dict[str, Any]) -> list[TextContent]:
             )]
 
         elif name == "remove_video_from_playlist":
+            if not arguments.get("confirmed", False):
+                return [TextContent(
+                    type="text",
+                    text=json.dumps({
+                        "confirmed": False,
+                        "action": "remove_video_from_playlist",
+                        "dry_run": True,
+                        "would_remove": {
+                            "playlist_item_id": arguments["playlist_item_id"]
+                        },
+                        "message": "Dry run only. Re-call with confirmed=true to remove the video."
+                    }, indent=2)
+                )]
             success = youtube_client.remove_video_from_playlist(
                 arguments["playlist_item_id"]
             )
@@ -316,6 +402,22 @@ async def call_tool(name: str, arguments: dict[str, Any]) -> list[TextContent]:
             )]
 
         elif name == "move_video_between_playlists":
+            if not arguments.get("confirmed", False):
+                return [TextContent(
+                    type="text",
+                    text=json.dumps({
+                        "confirmed": False,
+                        "action": "move_video_between_playlists",
+                        "dry_run": True,
+                        "would_move": {
+                            "video_id": arguments["video_id"],
+                            "playlist_item_id": arguments["playlist_item_id"],
+                            "source_playlist_id": arguments["source_playlist_id"],
+                            "target_playlist_id": arguments["target_playlist_id"]
+                        },
+                        "message": "Dry run only. Re-call with confirmed=true to move the video."
+                    }, indent=2)
+                )]
             result = youtube_client.move_video_between_playlists(
                 source_playlist_id=arguments["source_playlist_id"],
                 target_playlist_id=arguments["target_playlist_id"],
@@ -346,6 +448,19 @@ async def call_tool(name: str, arguments: dict[str, Any]) -> list[TextContent]:
             )]
 
         elif name == "batch_reorganize":
+            if not arguments.get("confirmed", False):
+                ops = arguments["operations"]
+                return [TextContent(
+                    type="text",
+                    text=json.dumps({
+                        "confirmed": False,
+                        "action": "batch_reorganize",
+                        "dry_run": True,
+                        "total_operations": len(ops),
+                        "would_move": ops,
+                        "message": f"Dry run only. {len(ops)} move operation(s) pending. Re-call with confirmed=true to execute."
+                    }, indent=2)
+                )]
             results = youtube_client.batch_reorganize(arguments["operations"])
             successful = sum(1 for r in results if r["success"])
             failed = len(results) - successful
