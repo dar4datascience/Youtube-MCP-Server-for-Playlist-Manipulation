@@ -69,7 +69,7 @@ class YouTubeClient:
 
         while True:
             request = self._youtube.playlists().list(
-                part='snippet,contentDetails',
+                part='snippet,contentDetails,status',
                 mine=True,
                 maxResults=min(max_results, 50),
                 pageToken=next_page_token
@@ -82,7 +82,7 @@ class YouTubeClient:
                     'title': item['snippet']['title'],
                     'description': item['snippet'].get('description', ''),
                     'item_count': item['contentDetails']['itemCount'],
-                    'privacy_status': item['snippet'].get('status', {}).get('privacyStatus', 'unknown'),
+                    'privacy_status': item.get('status', {}).get('privacyStatus', 'unknown'),
                     'published_at': item['snippet']['publishedAt'],
                     'channel_id': item['snippet']['channelId'],
                     'channel_title': item['snippet']['channelTitle']
